@@ -15,25 +15,35 @@ def InitVMatrix3X3(x1,x2,x3):
     V[2] = [x3 ** 2, x3, 1]
     return V
 
-def findMin_SquareAproximation(a, b, eps,draw_graphic = TRUE):
-    step = (b-a)/4
-    x1 = a + step
-    x2 = a + 2*step
-    x3 = a + 3*step
+def findMin_GC_and_SA(a, b, eps,draw_graphic = TRUE):
+    FIB = (1 + np.sqrt(5)) / 2
+
+    x1 = (a + b * (FIB - 1)) / FIB
+    x2 = (b + a * (FIB - 1)) / FIB
+    J1 = f(x1)
+    J2 = f(x2)
+
+    if (J1 <= J2):
+        x3 = x2
+        J3 = J2
+        x2 = x1
+        J2 = J1
+        x1 = (a + x3 * (FIB - 1)) / FIB
+        J1 = f(x1)
+    else:
+        x3 = (b + x1 * (FIB - 1)) / FIB
+        J3 = f(x3)
 
     vec_J = np.arange(3, dtype=np.double).reshape(3, 1)
-
-    vec_J = [f(x1),f(x2),f(x3)]
-
+    vec_J = [J1,J2,J3]
     top = 0
-    J_top = None
     top_prev = -10
+
     if (draw_graphic):
         counter = [0]
         intervals = [a,b]
-    n=0
+
     while np.abs(top - top_prev) > eps :
-        n+=1
         top_prev = top
         V = InitVMatrix3X3(x1,x2,x3)
         vec_abc = np.linalg.solve(V, vec_J)
@@ -70,7 +80,6 @@ def findMin_SquareAproximation(a, b, eps,draw_graphic = TRUE):
                 vec_J[1] = J_top
             elif (top < x3):
                 x3 = top
-
                 vec_J[2] = J_top
 
         elif (vec_J[0] > vec_J[2]):
@@ -91,17 +100,16 @@ def findMin_SquareAproximation(a, b, eps,draw_graphic = TRUE):
                 vec_J[1] = J_top
             elif (top > x1):
                 x1 = top
-
                 vec_J[0] = J_top
 
         if (draw_graphic):
-            counter += [n]
+            counter += [counter[-1] + 1]
             intervals += [a,b]
-    return counter, intervals,top
+    return counter, intervals, top
 
 def cm_to_inch(value):
     return value/2.54
-x,y,x_min = findMin_SquareAproximation(0,1,0.0000001,TRUE)
+x,y,top = findMin_GC_and_SA(0,1,0.0000001,TRUE)
 plt.style.use('seaborn-whitegrid')
 plt.figure(figsize=(cm_to_inch(16),cm_to_inch(10)))
 fig, ax = plt.subplots()
@@ -111,13 +119,8 @@ while (i < len(x)):
   ax.plot(y[k:k+2],[x[i],x[i]],color = 'blue', linestyle = '--')
   k+=2
   i+=1
-plt.title('Рис.11: Изменение интервала неопределённости\n в зависимости от итераций для точности 0.0000001\n для метода последовательной квадратичной аппроксимации')
+plt.title('Рис.14: Изменение интервала неопределённости\n в зависимости от итераций для точности 0.0000001\n для МЗС + МПКА')
 ax.set_xlabel('[a,b]')
 ax.set_ylabel('ki')
 plt.show()
-print(x_min,function.f(x_min),x[-1])
-
-
-
-
-
+print(top,function.f(top),x[-1])
